@@ -9,6 +9,7 @@
 #include <netdb.h>
 
 size_t char_len(char *buf);
+void close_connection(int server,int client);
 
 int main(int argc, char **argv) {
   std::cout << std::unitbuf;
@@ -105,14 +106,21 @@ int main(int argc, char **argv) {
   */
 
   char request_buffer[1024];
-  ssize_t rec_len = recv(client_fd, request_buffer, sizeof(request_buffer), MSG_WAITALL );
+  ssize_t rec_len = recv(client_fd, request_buffer, sizeof(request_buffer), 0 );
   if(rec_len <= 0){
     std::cerr<<"HTTP Request not received. Server exit\n";
     close_connection(server_fd,client_fd);
     return 1;
   }
+  int loc=0;
+  while(request_buffer[loc]!='/') loc++;
+  std::string URL;
+  while(request_buffer[loc]!=' ') {
+    URL += request_buffer[loc];
+    loc++;
+  }
 
-  if(request_buffer[6] != ' '){
+  if(URL!="/"){
     if(send( client_fd , response_404 , len_res_404 ,MSG_DONTROUTE)<0){
       std::cerr<<"Server failed to send response\n";
       close_connection(server_fd,client_fd);
