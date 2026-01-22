@@ -66,6 +66,7 @@ int main(int argc, char **argv) {
   
   if (bind(server_fd, (struct sockaddr *) &server_addr, sizeof(server_addr))!=0) {
     std::cerr << "Failed to bind to port 4221\n";
+    close(server_fd);
     return 1;
   }
   
@@ -74,6 +75,7 @@ int main(int argc, char **argv) {
   // details skipped(backlg?)
   if (listen(server_fd, connection_backlog) != 0) {
     std::cerr << "listen failed\n";
+    close(server_fd);
     return 1;
   }
   
@@ -85,26 +87,51 @@ int main(int argc, char **argv) {
   int client_fd = accept(server_fd, (struct sockaddr *) &client_addr, (socklen_t *) &client_addr_len);
   if(client_fd < 0) {
     std::cerr<<"Client-side connection failed\n";
+    close_connection(server_fd,client_fd);
     return 1;
   }
   std::cout << "Client connected\n";
   
-  char response_ok[] = "HTTP/1.1 200 OK\r\n\r\n";
-  size_t len_res = char_len(response_ok);
+  char response_200[] = "HTTP/1.1 200 OK\r\n\r\n";
+  char response_404[] = "HTTP/1.1 404 Not Found\r\n\r\n";
+
+  size_t len_res_200 = char_len(response_200);
+  size_t len_res_404 = char_len(response_404);
+
   /*
     ssize_t send(int socket, const void *buffer, size_t length, int flags);
     size_t -> unsigned int based on archi(auto 32/64bit assign)
     ssize_t -> signed version of size_t
   */
 
-  send( client_fd , response_ok , len_res ,MSG_DONTROUTE);
+  char request_buffer[1024];
+  ssize_t rec_len = recv(client_fd, request_buffer, sizeof(request_buffer), MSG_WAITALL );
+  if(rec_len <= 0){
+    std::cerr<<"HTTP Request not received. Server exit\n";
+    close_connection(server_fd,client_fd);
+    return 1;
+  }
 
+  if(request_buffer[6] != ' '){
+    if(send( client_fd , response_404 , len_res_404 ,MSG_DONTROUTE)<0){
+      std::cerr<<"Server failed to send response\n";
+      close_connection(server_fd,client_fd);
+      return 1;
+    };
+  }
+  else{
+    if(send( client_fd , response_200 , len_res_200 ,MSG_DONTROUTE)<0){
+      std::cerr<<"Server failed to send response\n";
+      close_connection(server_fd,client_fd);
+      return 1;
+    };
+  }
 
   /*
     Normally, Keep server_fd open
     Close client_fd after handling request
   */
-  close(server_fd);
+  close_connection(server_fd,client_fd);
 
   return 0;
 }
@@ -115,6 +142,10 @@ size_t char_len(char *buf){
   return len;
 }
 
+void close_connection(int server,int client){
+  close(client);
+  close(server);
+}
 
 /*
 int socket(int, int, int);
