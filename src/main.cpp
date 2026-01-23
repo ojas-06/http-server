@@ -7,9 +7,12 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <netdb.h>
+#include <regex>
 
 size_t char_len(char *buf);
 void close_connection(int server,int client);
+std::string extract_url(char *buffer);
+void get_echo_str(std::string& URL,char* get_response);
 
 int main(int argc, char **argv) {
   std::cout << std::unitbuf;
@@ -93,11 +96,11 @@ int main(int argc, char **argv) {
   }
   std::cout << "Client connected\n";
   
-  char response_200[] = "HTTP/1.1 200 OK\r\n\r\n";
-  char response_404[] = "HTTP/1.1 404 Not Found\r\n\r\n";
+  // char response_200[] = "HTTP/1.1 200 OK\r\n\r\n";
+  // char response_404[] = "HTTP/1.1 404 Not Found\r\n\r\n";
 
-  size_t len_res_200 = char_len(response_200);
-  size_t len_res_404 = char_len(response_404);
+  // size_t len_res_200 = char_len(response_200);
+  // size_t len_res_404 = char_len(response_404);
 
   /*
     ssize_t send(int socket, const void *buffer, size_t length, int flags);
@@ -112,27 +115,38 @@ int main(int argc, char **argv) {
     close_connection(server_fd,client_fd);
     return 1;
   }
-  int loc=0;
-  while(request_buffer[loc]!='/') loc++;
-  std::string URL;
-  while(request_buffer[loc]!=' ') {
-    URL += request_buffer[loc];
-    loc++;
-  }
 
-  if(URL!="/"){
-    if(send( client_fd , response_404 , len_res_404 ,MSG_DONTROUTE)<0){
-      std::cerr<<"Server failed to send response\n";
-      close_connection(server_fd,client_fd);
-      return 1;
-    };
-  }
-  else{
-    if(send( client_fd , response_200 , len_res_200 ,MSG_DONTROUTE)<0){
-      std::cerr<<"Server failed to send response\n";
-      close_connection(server_fd,client_fd);
-      return 1;
-    };
+  //Parsing the GET request
+  std::regex get("^GET "); 
+  if(regex_search(request_buffer,get)){
+  
+    std::string URL = extract_url(request_buffer);
+    std::regex echo("^/echo/");
+    if(regex_search(URL,echo)){
+      size_t c_len = URL.size() - 6;
+      std::string c_len_str = std::to_string(c_len)+"\r\n\r\n";
+      char get_response[1024] = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: ";
+      size_t l=strlen(get_response);
+      for(char c:c_len_str){
+        get_response[l] = c;
+        l++;
+      }
+      get_response[l] = '\0';
+      get_echo_str(URL,get_response);
+      if(send(client_fd, get_response,sizeof(get_response),0)<0){
+        std::cerr<<"Failed to send GET response\n";
+      }
+      } else if(URL == "/") {                                         
+        char response_200[] = "HTTP/1.1 200 OK\r\n\r\n";              
+        if(send(client_fd, response_200,strlen(response_200),0)<0){   
+          std::cerr<<"Failed to send 200 response\n";                 
+        }                                                             
+      } else {                                                        
+        char response_404[] = "HTTP/1.1 404 Not Found\r\n\r\n";       
+        if(send(client_fd, response_404,strlen(response_404),0)<0){   
+          std::cerr<<"Failed to send 404 response\n";                 
+        } 
+      }
   }
 
   /*
@@ -154,6 +168,30 @@ void close_connection(int server,int client){
   close(client);
   close(server);
 }
+
+std::string extract_url(char *buffer){
+  std::string URL;
+  int loc=0;
+  while(buffer[loc]!='/') loc++;
+  
+  while(buffer[loc]!=' ') {
+    URL += buffer[loc];
+    loc++;
+  }
+  return URL;
+}
+
+void get_echo_str(std::string& URL,char* get_response){
+  int i=6;
+  size_t l = strlen(get_response);
+  while(i<URL.size()){
+    get_response[l] = URL[i];
+    i++;
+    l++;
+  }
+  get_response[l] = '\0';
+}
+
 
 /*
 int socket(int, int, int);
