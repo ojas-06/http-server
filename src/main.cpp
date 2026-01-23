@@ -1,6 +1,6 @@
 #ifndef DEFS
   #define DEFS
-  #include <./include/defs.hpp>
+  #include "./include/defs.hpp"
 #endif
 
 int main(int argc, char **argv) {

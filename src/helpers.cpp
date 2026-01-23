@@ -1,6 +1,6 @@
 #ifndef DEFS
   #define DEFS
-  #include <./include/defs.hpp>
+  #include "./include/defs.hpp"
 #endif
 
 size_t char_len(char *buf){
