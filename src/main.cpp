@@ -55,14 +55,14 @@ int main(int argc, char **argv) {
     cout << "Client connected\n";
 
 
-    std::thread([client_fd]() {
+    std::thread([client_fd,argc,argv]() {
         char buf[1024];
         ssize_t n = recv(client_fd, buf, sizeof(buf)-1, 0);
         if (n > 0) {
             buf[n] = '\0';
             regex get("^GET "); 
             if(regex_search(buf,get)){
-              http_get(buf,client_fd);
+              http_get(buf,client_fd,argc,argv);
             }
         }
     close(client_fd);

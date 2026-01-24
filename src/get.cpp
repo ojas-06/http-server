@@ -3,10 +3,11 @@
   #include "./include/defs.hpp"
 #endif
 
-void http_get(char* request,int client_fd){
+void http_get(char* request,int client_fd,int argc, char **argv){
   string URL = extract_url(request);
   regex echo("^/echo/");
   regex userAgent("^/user-agent");
+  regex files("^/files/");
 
   if(regex_search(URL,echo)){
     size_t c_len = URL.size() - 6;
@@ -23,6 +24,46 @@ void http_get(char* request,int client_fd){
       cerr<<"Failed to send GET response\n";
     }
   } 
+  else if(regex_search(URL,files)){
+    if(argc < 3) {
+      cerr<<"File directory not provided!\n";
+      return;
+    }
+    string dir = argv[2];
+    string filename = URL.substr(7);
+    if(std::filesystem::exists(dir+"/"+filename)){
+      char response[1024] = "HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\nContent-Length: ";
+      ifstream files(dir+"/"+filename,std::ios::binary);
+      if(!files.is_open()){
+        cerr<<"File exists but could not open\n";
+        return;
+      }
+
+    std::ostringstream file_content;
+    file_content << files.rdbuf();
+    string content_str = file_content.str();
+
+    int i=strlen(response);
+    size_t c_size = content_str.size();
+    for(char c: to_string(c_size) + "\r\n\r\n"){
+      response[i] = c;
+      i++;
+    }
+    for(char c:content_str){
+      response[i] = c;
+      i++;
+    }
+
+    if(send(client_fd,response,strlen(response),0)<0){
+      cerr<<"Unable to send to client\n";
+      return;
+    }
+  }
+  else{
+    nf_404(client_fd);
+  }
+
+  }
   else if(regex_search(URL,userAgent)){
     string headerContent = extractHeader(request, "User-Agent");
     if(headerContent == "void"){
@@ -47,9 +88,6 @@ void http_get(char* request,int client_fd){
       cerr<<"Failed to send 200 response\n";                 
     }                                                             
   } else {                                                        
-    char response_404[] = "HTTP/1.1 404 Not Found\r\nContent-Length: 0\r\n\r\n";       
-    if(send(client_fd, response_404,strlen(response_404),0)<0){   
-      cerr<<"Failed to send 404 response\n";                 
-    } 
+    nf_404(client_fd);
   }
 }
