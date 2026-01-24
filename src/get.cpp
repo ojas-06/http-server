@@ -19,7 +19,7 @@ void http_get(char* request,int client_fd){
     }
     echo_response[l] = '\0';
     get_echo_str(URL,echo_response);
-    if(send(client_fd, echo_response,sizeof(echo_response),0)<0){
+    if(send(client_fd, echo_response,strlen(echo_response),0)<0){
       cerr<<"Failed to send GET response\n";
     }
   } 
@@ -42,12 +42,12 @@ void http_get(char* request,int client_fd){
     }  
   }
   else if(URL == "/") {                                         
-    char response_200[] = "HTTP/1.1 200 OK\r\n\r\n";              
+    char response_200[] = "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n";              
     if(send(client_fd, response_200,strlen(response_200),0)<0){   
       cerr<<"Failed to send 200 response\n";                 
     }                                                             
   } else {                                                        
-    char response_404[] = "HTTP/1.1 404 Not Found\r\n\r\n";       
+    char response_404[] = "HTTP/1.1 404 Not Found\r\nContent-Length: 0\r\n\r\n";       
     if(send(client_fd, response_404,strlen(response_404),0)<0){   
       cerr<<"Failed to send 404 response\n";                 
     } 

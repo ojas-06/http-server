@@ -45,29 +45,31 @@ int main(int argc, char **argv) {
   
   cout << "Waiting for a client to connect...\n";
   
-  int client_fd = accept(server_fd, (struct sockaddr *) &client_addr, (socklen_t *) &client_addr_len);
-  if(client_fd < 0) {
-    cerr<<"Client-side connection failed\n";
-    close_connection(server_fd,client_fd);
-    return 1;
-  }
-  cout << "Client connected\n";
+  while(1){
+    int client_fd = accept(server_fd, (struct sockaddr *) &client_addr, (socklen_t *) &client_addr_len);
+    if(client_fd < 0) {
+      cerr<<"Client-side connection failed\n";
+      close(client_fd);
+      continue;
+    }
+    cout << "Client connected\n";
 
-  char request_buffer[1024];
-  ssize_t rec_len = recv(client_fd, request_buffer, sizeof(request_buffer), 0 );
-  if(rec_len <= 0){
-    cerr<<"HTTP Request not received. Server exit\n";
-    close_connection(server_fd,client_fd);
-    return 1;
-  }
 
-  //Parsing the GET request
-  regex get("^GET "); 
-  if(regex_search(request_buffer,get)){
-    http_get(request_buffer,client_fd);
-  }
+    std::thread([client_fd]() {
+        char buf[1024];
+        ssize_t n = recv(client_fd, buf, sizeof(buf)-1, 0);
+        if (n > 0) {
+            buf[n] = '\0';
+            regex get("^GET "); 
+            if(regex_search(buf,get)){
+              http_get(buf,client_fd);
+            }
+        }
+    close(client_fd);
+    }).detach();
 
-  close_connection(server_fd,client_fd);
+  }
+  close(server_fd);
 
   return 0;
 }

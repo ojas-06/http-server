@@ -9,11 +9,6 @@ size_t char_len(char *buf){
   return len;
 }
 
-void close_connection(int server,int client){
-  close(client);
-  close(server);
-}
-
 string extract_url(char *buffer){
   string URL;
   int loc=0;

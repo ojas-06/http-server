@@ -8,10 +8,10 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <regex>
+#include<thread>
 using namespace std;
 
 size_t char_len(char *buf);
-void close_connection(int server,int client);
 string extract_url(char *buffer);
 void get_echo_str(string& URL,char* get_response);
 void http_get(char* buffer,int client_fd);
