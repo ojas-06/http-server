@@ -61,8 +61,24 @@ int main(int argc, char **argv) {
         if (n > 0) {
             buf[n] = '\0';
             regex get("^GET "); 
+            regex post("^POST ");
             if(regex_search(buf,get)){
-              http_get(buf,client_fd,argc,argv);
+              try{
+                http_get(buf,client_fd,argc,argv);
+              } catch(const filesystem::filesystem_error &e){
+                cerr<<"Filesystem error: "<<e.what()<<endl;
+              } catch(const runtime_error &e){
+                cerr<<"Runtime error: "<<e.what()<<endl;
+              } 
+            }
+            else if(regex_search(buf,post)){
+              try{
+                http_post(buf,client_fd,argc,argv);
+              } catch(const runtime_error &e){
+                cerr<<e.what()<<endl;
+              } catch(const filesystem::filesystem_error &e){
+                cerr<<"Filesystem error: "<<e.what()<<endl;
+              }
             }
         }
     close(client_fd);

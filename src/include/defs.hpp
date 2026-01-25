@@ -11,12 +11,17 @@
 #include<thread>
 #include<filesystem>
 #include<fstream>
+#include <system_error>
+
 
 using namespace std;
 
 size_t char_len(char *buf);
 string extract_url(char *buffer);
 void get_echo_str(string& URL,char* get_response);
-void http_get(char* buffer,int client_fd,int argc, char **argv);
 string extractHeader(char* request, string header);
 void nf_404(int client_fd);
+string extract_request_body(char * request);
+
+int http_get(char* buffer,int client_fd,int argc, char **argv);
+int http_post(char *,int,int,char **);

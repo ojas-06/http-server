@@ -37,7 +37,8 @@ string extractHeader(char* request, string header){
   string req = request;
   int i = req.find(header);
   if(i==string::npos) {
-    return "void";
+    throw runtime_error("Could not find header "+header+" in the request" );
+    return "";
   }
   int j=i+1;
   while(req[j]!='\r') j++;
@@ -55,4 +56,18 @@ void nf_404(int client_fd){
   if(send(client_fd, response_404,strlen(response_404),0)<0){   
     cerr<<"Failed to send 404 response\n";                 
   } 
+}
+
+string extract_request_body(char * request){
+  string body;
+  string req_str = request;
+
+  int index = req_str.find("\r\n\r\n");
+  if(index == string::npos){
+    throw runtime_error("Failed to extract request body");
+    return "";
+  }
+  index += 4;
+
+  return req_str.substr(index);
 }

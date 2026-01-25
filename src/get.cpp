@@ -3,7 +3,7 @@
   #include "./include/defs.hpp"
 #endif
 
-void http_get(char* request,int client_fd,int argc, char **argv){
+int http_get(char* request,int client_fd,int argc, char **argv){
   string URL = extract_url(request);
   regex echo("^/echo/");
   regex userAgent("^/user-agent");
@@ -26,8 +26,8 @@ void http_get(char* request,int client_fd,int argc, char **argv){
   } 
   else if(regex_search(URL,files)){
     if(argc < 3) {
-      cerr<<"File directory not provided!\n";
-      return;
+      throw runtime_error("Directory not provided for processing POST request");  
+      return 1;
     }
     string dir = argv[2];
     string filename = URL.substr(7);
@@ -35,8 +35,11 @@ void http_get(char* request,int client_fd,int argc, char **argv){
       char response[1024] = "HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\nContent-Length: ";
       ifstream files(dir+"/"+filename,std::ios::binary);
       if(!files.is_open()){
-        cerr<<"File exists but could not open\n";
-        return;
+        throw std::filesystem::filesystem_error(
+          "File exists but could not open",
+          std::make_error_code(std::errc::io_error)
+        );
+        return 1;
       }
 
     std::ostringstream file_content;
@@ -55,8 +58,8 @@ void http_get(char* request,int client_fd,int argc, char **argv){
     }
 
     if(send(client_fd,response,strlen(response),0)<0){
-      cerr<<"Unable to send to client\n";
-      return;
+      throw runtime_error("Unable to send to client");
+      return 1;
     }
   }
   else{
@@ -65,10 +68,15 @@ void http_get(char* request,int client_fd,int argc, char **argv){
 
   }
   else if(regex_search(URL,userAgent)){
-    string headerContent = extractHeader(request, "User-Agent");
-    if(headerContent == "void"){
-      cerr<<"No 'User-Agent' header present in HTTP request\n";
-      return;
+    string headerContent;
+    try{
+      headerContent = extractHeader(request, "User-Agent");
+    } catch(const runtime_error &e){
+      cerr<<e.what()<<endl;
+    }
+    if(!headerContent.size()){
+      throw runtime_error("No 'User-Agent' header present in HTTP request");
+      return 1;
     }
     char ua_response[1024] = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: ";
     size_t i = strlen(ua_response);
@@ -87,7 +95,8 @@ void http_get(char* request,int client_fd,int argc, char **argv){
     if(send(client_fd, response_200,strlen(response_200),0)<0){   
       cerr<<"Failed to send 200 response\n";                 
     }                                                             
-  } else {                                                        
+  } else {                                                
     nf_404(client_fd);
   }
+  return 0;
 }
