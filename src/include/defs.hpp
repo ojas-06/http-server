@@ -23,5 +23,5 @@ string extractHeader(char* request, string header);
 void nf_404(int client_fd);
 string extract_request_body(char * request);
 
-int http_get(char* buffer,int client_fd,int argc, char **argv);
-int http_post(char *,int,int,char **);
+int http_get(char*,int,int, char **,string);
+int http_post(char *,int,int,char **,string);

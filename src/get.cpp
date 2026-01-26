@@ -3,7 +3,7 @@
   #include "./include/defs.hpp"
 #endif
 
-int http_get(char* request,int client_fd,int argc, char **argv){
+int http_get(char* request,int client_fd,int argc, char **argv,string compression){
   string URL = extract_url(request);
   regex echo("^/echo/");
   regex userAgent("^/user-agent");
@@ -12,7 +12,13 @@ int http_get(char* request,int client_fd,int argc, char **argv){
   if(regex_search(URL,echo)){
     size_t c_len = URL.size() - 6;
     string c_len_str = to_string(c_len)+"\r\n\r\n";
-    char echo_response[1024] = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: ";
+    char echo_response[1024];
+    if(compression == "gzip") {
+      strcpy(echo_response,"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Encoding: gzip\r\nContent-Length: ");
+    }
+    else{
+      strcpy(echo_response,"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: ");
+    }
     size_t l=strlen(echo_response);
     for(char c:c_len_str){
       echo_response[l] = c;
@@ -26,7 +32,7 @@ int http_get(char* request,int client_fd,int argc, char **argv){
   } 
   else if(regex_search(URL,files)){
     if(argc < 3) {
-      throw runtime_error("Directory not provided for processing POST request");  
+      throw runtime_error("Directory not provided for processing GET request");  
       return 1;
     }
     string dir = argv[2];
@@ -100,3 +106,13 @@ int http_get(char* request,int client_fd,int argc, char **argv){
   }
   return 0;
 }
+
+
+/*
+    if(compression == "gzip") {
+      strcpy(response,"HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\nContent-Encoding: gzip\r\nContent-Length: ");
+    }
+    else{
+      strcpy(response,"HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\nContent-Length: ");
+    }
+*/

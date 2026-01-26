@@ -37,7 +37,6 @@ string extractHeader(char* request, string header){
   string req = request;
   int i = req.find(header);
   if(i==string::npos) {
-    throw runtime_error("Could not find header "+header+" in the request" );
     return "";
   }
   int j=i+1;
