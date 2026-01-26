@@ -13,7 +13,7 @@ int http_get(char* request,int client_fd,int argc, char **argv,string compressio
     size_t c_len = URL.size() - 6;
     string c_len_str = to_string(c_len)+"\r\n\r\n";
     char echo_response[1024];
-    if(compression == "gzip") {
+    if(compression.find("gzip") != string::npos) {
       strcpy(echo_response,"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Encoding: gzip\r\nContent-Length: ");
     }
     else{
