@@ -18,7 +18,7 @@ using namespace std;
 
 string extractURL(string& buffer);
 ssize_t echoResponse(string& URL,string& get_response, int compress);
-string extractHeader(string& request, string header);
+string extractHeader(string& headers, string header);
 void nf_404(int client_fd);
 string extract_request_body(string& request);
 void str_to_bytef(string& in_buf,vector<Bytef> &out_buf) ;

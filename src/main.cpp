@@ -56,41 +56,73 @@ int main(int argc, char **argv) {
 
 
     std::thread([client_fd,argc,argv]() {
+      string closeConnection;
       string req;
-      char buf[1024];
-      while (req.find("\r\n\r\n") == string::npos) {
-        ssize_t n = recv(client_fd, buf, sizeof(buf), 0);
-        if (n <= 0) {
-          cerr<<"Recv failed or connection closed\n";
-          close(client_fd);
-          return;
+      size_t prevReqLen=0;
+      do{
+        char buf[1024];
+        while (req.find("\r\n\r\n") == string::npos) {
+          ssize_t n = recv(client_fd, buf, sizeof(buf), 0);
+          if (n == 0) {
+            close(client_fd);
+            return;
+          }
+          if (n < 0) {
+            cerr<<"Recv failed or connection closed\n";
+            close(client_fd);
+            return;
+          }
+          req.append(buf, n);
+          if (req.find("\r\n\r\n") != string::npos && req.find("\r\n\r\n") + 4 > 8192) {
+            cerr<<"Request headers too large\n";
+            close(client_fd);
+            return;
+          }
         }
-        req.append(buf, n);
-        if (req.size() > 8192) {
-          cerr<<"Request headers too large\n";
-          close(client_fd);
-          return;
+        size_t _headerSize = req.find("\r\n\r\n")+4;
+        string headers = req.substr(0,_headerSize);
+        string conLenStr = extractHeader(headers,"Content-Length");
+        size_t _bodySize = 0;
+        if(conLenStr != ""){
+          _bodySize = stoi(conLenStr);
         }
-      }
+        prevReqLen = _headerSize + _bodySize;
+        while( req.size() < prevReqLen){
+          ssize_t n = recv(client_fd, buf, sizeof(buf), 0);
+          if (n == 0) {
+            close(client_fd);
+            return;
+          }
+          if (n < 0) {
+            cerr<<"Recv failed or connection closed\n";
+            close(client_fd);
+            return;
+          }
+          req.append(buf, n);
+        }
 
-      string comp_scheme = extractHeader(req, "Accept-Encoding");
-      if( req.substr(0,3) == "GET" ){
-        try{
-          http_get(req,client_fd,argc,argv,comp_scheme);
-        } catch(const runtime_error &e){
-          cerr<<"Runtime error: "<<e.what()<<endl;
-        } 
-      }
-      else if( req.substr(0,4) == "POST" ){
-        try{
-          http_post(req,client_fd,argc,argv,comp_scheme);
-        } catch(const runtime_error &e){
-          cerr<<e.what()<<endl;
+        string curr = req.substr(0, prevReqLen);
+        string comp_scheme = extractHeader(headers, "Accept-Encoding");
+        closeConnection = extractHeader(headers, "Connection");
+        if( curr.substr(0,3) == "GET" ){
+          try{
+            http_get(curr,client_fd,argc,argv,comp_scheme);
+          } catch(const runtime_error &e){
+            cerr<<"Runtime error: "<<e.what()<<endl;
+          } 
         }
-      }
+        else if( curr.substr(0,4) == "POST" ){
+          try{
+            http_post(curr,client_fd,argc,argv,comp_scheme);
+          } catch(const runtime_error &e){ 
+            cerr<<e.what()<<endl;
+          }
+        }
+        req.erase(0,prevReqLen);
+      } while(closeConnection != "close");
       close(client_fd);
+      cout<<"Client "<<client_fd<<" closed\n";
     }).detach();
-
   }
   close(server_fd);
 
