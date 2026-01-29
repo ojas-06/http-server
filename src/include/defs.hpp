@@ -17,12 +17,12 @@
 using namespace std;
 
 string extractURL(string& buffer);
-ssize_t echoResponse(string& URL,string& get_response, int compress);
+ssize_t echoResponse(string& URL,string& get_response, int compress,bool keep);
 string extractHeader(string& headers, string header);
 void nf_404(int client_fd);
 string extract_request_body(string& request);
 void str_to_bytef(string& in_buf,vector<Bytef> &out_buf) ;
 int compressBuffer(const std::vector<Bytef>& input, vector<Bytef>& compressed);
 
-int http_get(string req,int client ,int argc, char **argv,string compression);
-int http_post(string req,int client ,int argc, char **argv,string compression);
+int http_get(string req,int client ,int argc, char **argv,string compression,bool keep);
+int http_post(string req,int client ,int argc, char **argv,string compression,bool keep);

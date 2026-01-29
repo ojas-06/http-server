@@ -3,7 +3,7 @@
   #include "./include/defs.hpp"
 #endif
 
-int http_post(string request, int client_fd,int argc , char** argv,string compression){
+int http_post(string request, int client_fd,int argc , char** argv,string compression,bool keep){
   if(argc<3){
     throw runtime_error("Directory not provided for processing POST request");
     return 1;

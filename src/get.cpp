@@ -3,7 +3,7 @@
   #include "./include/defs.hpp"
 #endif
 
-int http_get(string request,int client_fd ,int argc, char **argv,string compression){
+int http_get(string request,int client_fd ,int argc, char **argv,string compression,bool keep){
   string URL = extractURL(request);
 
   if(URL.substr(0,6) == "/echo/"){
@@ -12,10 +12,10 @@ int http_get(string request,int client_fd ,int argc, char **argv,string compress
     if(compression.find("gzip") != string::npos) compress = true;
     ssize_t responseSize;
     if(compress) {
-      responseSize = echoResponse(URL,echo_response,1); //1 -> gzip
+      responseSize = echoResponse(URL,echo_response,1,keep); //1 -> gzip
     }
     else{
-      responseSize = echoResponse(URL,echo_response,0); //0 -> no compression
+      responseSize = echoResponse(URL,echo_response,0,keep); //0 -> no compression
     }
 
     if(responseSize<0){
@@ -34,7 +34,13 @@ int http_get(string request,int client_fd ,int argc, char **argv,string compress
     string dir = argv[2];
     string filename = URL.substr(7);
     if(std::filesystem::exists(dir+"/"+filename)){
-      char response[1024] = "HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\nContent-Length: ";
+      string response;
+      if(!keep){
+        response = "HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\nConnection: close\r\nContent-Length: ";
+      }
+      else {
+        response = "HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\nContent-Length: ";
+      }
       ifstream files(dir+"/"+filename,std::ios::binary);
       if(!files.is_open()){
         throw runtime_error("File exists but could not open");
@@ -45,18 +51,15 @@ int http_get(string request,int client_fd ,int argc, char **argv,string compress
     file_content << files.rdbuf();
     string content_str = file_content.str();
 
-    int i=strlen(response);
     size_t c_size = content_str.size();
     for(char c: to_string(c_size) + "\r\n\r\n"){
-      response[i] = c;
-      i++;
+      response += c;
     }
     for(char c:content_str){
-      response[i] = c;
-      i++;
+      response += c;
     }
 
-    if(send(client_fd,response,strlen(response),0)<0){
+    if(send(client_fd,response.data(),response.size(),0)<0){
       throw runtime_error("Unable to send to client");
       return 1;
     }
@@ -77,21 +80,31 @@ int http_get(string request,int client_fd ,int argc, char **argv,string compress
       throw runtime_error("No 'User-Agent' header present in HTTP request");
       return 1;
     }
-    char ua_response[1024] = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: ";
-    size_t i = strlen(ua_response);
+    string ua_response;
+    if(!keep){
+      ua_response = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nConnection: close\r\nContent-Length: ";
+    }
+    else{
+      ua_response = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: ";
+    }
     string contentSize = to_string(headerContent.size())+"\r\n\r\n";
     for(char c:contentSize){
-      ua_response[i] = c;
-      i++;
+      ua_response += c;
     }
-    for(char c:headerContent) ua_response[i++] = c;
-    if(send(client_fd, ua_response,strlen(ua_response),0)<0){   
+    for(char c:headerContent) ua_response += c;
+    if(send(client_fd, ua_response.data(),ua_response.size(),0)<0){   
       cerr<<"Failed to send 200 response\n";                 
     }  
   }
   else if(URL == "/") {                                         
-    char response_200[] = "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n";              
-    if(send(client_fd, response_200,strlen(response_200),0)<0){   
+    string response_200;     
+    if(!keep){
+      response_200 = "HTTP/1.1 200 OK\r\nConnection: close\r\nContent-Length: 0\r\n\r\n"; 
+    }         
+    else{
+      response_200 = "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n"; 
+    }
+    if(send(client_fd, response_200.data(),response_200.size(),0)<0){   
       cerr<<"Failed to send 200 response\n";                 
     }                                                             
   } else {                                                

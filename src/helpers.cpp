@@ -15,10 +15,15 @@ string extractURL(string& buffer){
   return URL;
 }
 
-ssize_t echoResponse(string& URL,string& response,int compress){
+ssize_t echoResponse(string& URL,string& response,int compress,bool keep){
   string uncomp = URL.substr(6);
   if(!compress){
-    response = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: ";
+    if(!keep){
+      response = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nConnection: close\r\nContent-Length: ";
+    }
+    else {
+      response = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: ";
+    }
     for(char c: to_string(uncomp.size())+"\r\n\r\n"){
       response += c;
     }
@@ -26,7 +31,12 @@ ssize_t echoResponse(string& URL,string& response,int compress){
       response += c;
     }
   } else if(compress == 1){
-    response = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Encoding: gzip\r\nContent-Length: ";
+    if(!keep){
+      response = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Encoding: gzip\r\nConnection: close\r\nContent-Length: ";
+    }
+    else{
+      response = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Encoding: gzip\r\nContent-Length: ";
+    }
     vector<Bytef> uncomp_bytef;
     str_to_bytef(uncomp, uncomp_bytef);
     vector<Bytef> compressed;

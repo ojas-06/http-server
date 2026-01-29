@@ -59,6 +59,7 @@ int main(int argc, char **argv) {
       string closeConnection;
       string req;
       size_t prevReqLen=0;
+      bool keep = true;
       do{
         char buf[1024];
         while (req.find("\r\n\r\n") == string::npos) {
@@ -104,22 +105,23 @@ int main(int argc, char **argv) {
         string curr = req.substr(0, prevReqLen);
         string comp_scheme = extractHeader(headers, "Accept-Encoding");
         closeConnection = extractHeader(headers, "Connection");
+        if(closeConnection == "close") keep = false;
         if( curr.substr(0,3) == "GET" ){
           try{
-            http_get(curr,client_fd,argc,argv,comp_scheme);
+            http_get(curr,client_fd,argc,argv,comp_scheme,keep);
           } catch(const runtime_error &e){
             cerr<<"Runtime error: "<<e.what()<<endl;
           } 
         }
         else if( curr.substr(0,4) == "POST" ){
           try{
-            http_post(curr,client_fd,argc,argv,comp_scheme);
+            http_post(curr,client_fd,argc,argv,comp_scheme,keep);
           } catch(const runtime_error &e){ 
             cerr<<e.what()<<endl;
           }
         }
         req.erase(0,prevReqLen);
-      } while(closeConnection != "close");
+      } while(keep);
       close(client_fd);
       cout<<"Client "<<client_fd<<" closed\n";
     }).detach();
