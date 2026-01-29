@@ -11,10 +11,9 @@ int http_post(string request, int client_fd,int argc , char** argv,string compre
 
   string dir = argv[2];
   string URL = extractURL(request);
-  regex files_ep("/files/");
 
   string filename = URL.substr(7);
-    if(regex_search(URL,files_ep)){
+    if(URL.substr(0,7) == "/files/"){
     string req_body;
     try{
       req_body = extract_request_body(request);
@@ -24,8 +23,8 @@ int http_post(string request, int client_fd,int argc , char** argv,string compre
     ofstream post_out(dir+"/"+filename);
     post_out << req_body;
 
-    char response_201[] = "HTTP/1.1 201 Created\r\n\r\n";       
-    if(send(client_fd, response_201,strlen(response_201),0)<0){                    
+    string response_201 = "HTTP/1.1 201 Created\r\n\r\n";       
+    if(send(client_fd, response_201.data(),response_201.size(),0)<0){                    
       throw runtime_error("Failed to send 404 response");
       return 1;
     } 

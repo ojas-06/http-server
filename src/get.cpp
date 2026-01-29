@@ -5,11 +5,8 @@
 
 int http_get(string request,int client_fd ,int argc, char **argv,string compression){
   string URL = extractURL(request);
-  regex echo("^/echo/");
-  regex userAgent("^/user-agent");
-  regex files("^/files/");
 
-  if(regex_search(URL,echo)){
+  if(URL.substr(0,6) == "/echo/"){
     string echo_response;
     bool compress = false;
     if(compression.find("gzip") != string::npos) compress = true;
@@ -29,7 +26,7 @@ int http_get(string request,int client_fd ,int argc, char **argv,string compress
       throw runtime_error("Failed to send GET response");
     }
   } 
-  else if(regex_search(URL,files)){
+  else if(URL.substr(0,7) == "/files/"){
     if(argc < 3) {
       throw runtime_error("Directory not provided for processing GET request");  
       return 1;
@@ -69,7 +66,7 @@ int http_get(string request,int client_fd ,int argc, char **argv,string compress
   }
 
   }
-  else if(regex_search(URL,userAgent)){
+  else if(URL.substr(0,11) == "/user-agent"){
     string headerContent;
     try{
       headerContent = extractHeader(request, "User-Agent");

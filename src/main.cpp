@@ -74,8 +74,6 @@ int main(int argc, char **argv) {
       }
 
       string comp_scheme = extractHeader(req, "Accept-Encoding");
-      regex get("^GET "); 
-      regex post("^POST ");
       if( req.substr(0,3) == "GET" ){
         try{
           http_get(req,client_fd,argc,argv,comp_scheme);
@@ -83,7 +81,7 @@ int main(int argc, char **argv) {
           cerr<<"Runtime error: "<<e.what()<<endl;
         } 
       }
-      else if( req.substr(0,3) == "POST" ){
+      else if( req.substr(0,4) == "POST" ){
         try{
           http_post(req,client_fd,argc,argv,comp_scheme);
         } catch(const runtime_error &e){
