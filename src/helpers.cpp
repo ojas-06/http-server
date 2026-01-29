@@ -42,7 +42,7 @@ ssize_t echoResponse(string& URL,string& response,int compress){
       response += c;
     }
   }
-  return ;
+  return response.size();
 }
 
 string extractHeader(string& req, string header){
