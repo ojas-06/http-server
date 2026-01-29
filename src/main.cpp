@@ -56,30 +56,39 @@ int main(int argc, char **argv) {
 
 
     std::thread([client_fd,argc,argv]() {
+      string req;
       char buf[1024];
-      ssize_t n = recv(client_fd, buf, sizeof(buf)-1, 0);
-      string comp_scheme = extractHeader(buf, "Accept-Encoding");
-      if (n > 0) {
-        buf[n] = '\0';
-        regex get("^GET "); 
-        regex post("^POST ");
-        if(regex_search(buf,get)){
-          try{
-            http_get(buf,client_fd,argc,argv,comp_scheme);
-          } catch(const filesystem::filesystem_error &e){
-            cerr<<"Filesystem error: "<<e.what()<<endl;
-          } catch(const runtime_error &e){
-            cerr<<"Runtime error: "<<e.what()<<endl;
-          } 
+      while (req.find("\r\n\r\n") == string::npos) {
+        ssize_t n = recv(client_fd, buf, sizeof(buf), 0);
+        if (n <= 0) {
+          cerr<<"Recv failed or connection closed\n";
+          close(client_fd);
+          return;
         }
-        else if(regex_search(buf,post)){
-          try{
-            http_post(buf,client_fd,argc,argv,comp_scheme);
-          } catch(const runtime_error &e){
-            cerr<<e.what()<<endl;
-          } catch(const filesystem::filesystem_error &e){
-            cerr<<"Filesystem error: "<<e.what()<<endl;
-          }
+        req.append(buf, n);
+        if (req.size() > 8192) {
+          cerr<<"Request headers too large\n";
+          close(client_fd);
+          return;
+        }
+      }
+
+      const char *req_cstr = req.c_str();
+      string comp_scheme = extractHeader(const_cast<char*>(req_cstr), "Accept-Encoding");
+      regex get("^GET "); 
+      regex post("^POST ");
+      if(regex_search(req_cstr,get)){
+        try{
+          http_get(const_cast<char*>(req_cstr),client_fd,argc,argv,comp_scheme);
+        } catch(const runtime_error &e){
+          cerr<<"Runtime error: "<<e.what()<<endl;
+        } 
+      }
+      else if(regex_search(req_cstr,post)){
+        try{
+          http_post(const_cast<char*>(req_cstr),client_fd,argc,argv,comp_scheme);
+        } catch(const runtime_error &e){
+          cerr<<e.what()<<endl;
         }
       }
       close(client_fd);

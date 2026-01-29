@@ -10,24 +10,23 @@ int http_get(char* request,int client_fd,int argc, char **argv,string compressio
   regex files("^/files/");
 
   if(regex_search(URL,echo)){
-    size_t c_len = URL.size() - 6;
-    string c_len_str = to_string(c_len)+"\r\n\r\n";
     char echo_response[1024];
-    if(compression.find("gzip") != string::npos) {
-      strcpy(echo_response,"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Encoding: gzip\r\nContent-Length: ");
+    bool compress = false;
+    if(compression.find("gzip") != string::npos) compress = true;
+    ssize_t responseSize;
+    if(compress) {
+      responseSize = echoResponse(URL,echo_response,1); //1 -> gzip
     }
     else{
-      strcpy(echo_response,"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: ");
+      responseSize = echoResponse(URL,echo_response,0); //0 -> no compression
     }
-    size_t l=strlen(echo_response);
-    for(char c:c_len_str){
-      echo_response[l] = c;
-      l++;
-    }
-    echo_response[l] = '\0';
-    get_echo_str(URL,echo_response);
-    if(send(client_fd, echo_response,strlen(echo_response),0)<0){
-      cerr<<"Failed to send GET response\n";
+
+    if(responseSize<0){
+      throw runtime_error("Failed to generate echo response");
+    }; 
+
+    if(send(client_fd, echo_response,responseSize,0)<0){
+      throw runtime_error("Failed to send GET response");
     }
   } 
   else if(regex_search(URL,files)){
@@ -41,10 +40,7 @@ int http_get(char* request,int client_fd,int argc, char **argv,string compressio
       char response[1024] = "HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\nContent-Length: ";
       ifstream files(dir+"/"+filename,std::ios::binary);
       if(!files.is_open()){
-        throw std::filesystem::filesystem_error(
-          "File exists but could not open",
-          std::make_error_code(std::errc::io_error)
-        );
+        throw runtime_error("File exists but could not open");
         return 1;
       }
 
@@ -106,13 +102,3 @@ int http_get(char* request,int client_fd,int argc, char **argv,string compressio
   }
   return 0;
 }
-
-
-/*
-    if(compression == "gzip") {
-      strcpy(response,"HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\nContent-Encoding: gzip\r\nContent-Length: ");
-    }
-    else{
-      strcpy(response,"HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\nContent-Length: ");
-    }
-*/
