@@ -45,7 +45,7 @@ int main(int argc, char **argv) {
   
   cout << "Waiting for a client to connect...\n";
   
-  while(1){
+  while(true){
     int client_fd = accept(server_fd, (struct sockaddr *) &client_addr, (socklen_t *) &client_addr_len);
     if(client_fd < 0) {
       cerr<<"Client-side connection failed\n";
@@ -73,20 +73,19 @@ int main(int argc, char **argv) {
         }
       }
 
-      const char *req_cstr = req.c_str();
-      string comp_scheme = extractHeader(const_cast<char*>(req_cstr), "Accept-Encoding");
+      string comp_scheme = extractHeader(req, "Accept-Encoding");
       regex get("^GET "); 
       regex post("^POST ");
-      if(regex_search(req_cstr,get)){
+      if( req.substr(0,3) == "GET" ){
         try{
-          http_get(const_cast<char*>(req_cstr),client_fd,argc,argv,comp_scheme);
+          http_get(req,client_fd,argc,argv,comp_scheme);
         } catch(const runtime_error &e){
           cerr<<"Runtime error: "<<e.what()<<endl;
         } 
       }
-      else if(regex_search(req_cstr,post)){
+      else if( req.substr(0,3) == "POST" ){
         try{
-          http_post(const_cast<char*>(req_cstr),client_fd,argc,argv,comp_scheme);
+          http_post(req,client_fd,argc,argv,comp_scheme);
         } catch(const runtime_error &e){
           cerr<<e.what()<<endl;
         }

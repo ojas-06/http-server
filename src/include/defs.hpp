@@ -16,14 +16,13 @@
 
 using namespace std;
 
-size_t char_len(char *buf);
-string extract_url(char *buffer);
-ssize_t echoResponse(string& URL,char* get_response, int compress);
-string extractHeader(char* request, string header);
+string extractURL(string& buffer);
+ssize_t echoResponse(string& URL,string& get_response, int compress);
+string extractHeader(string& request, string header);
 void nf_404(int client_fd);
-string extract_request_body(char * request);
-void str_to_bytef(string in_buf,vector<Bytef> &out_buf) ;
+string extract_request_body(string& request);
+void str_to_bytef(string& in_buf,vector<Bytef> &out_buf) ;
 int compressBuffer(const std::vector<Bytef>& input, vector<Bytef>& compressed);
 
-int http_get(char*,int,int, char **,string);
-int http_post(char *,int,int,char **,string);
+int http_get(string req,int client ,int argc, char **argv,string compression);
+int http_post(string req,int client ,int argc, char **argv,string compression);

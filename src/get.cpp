@@ -3,14 +3,14 @@
   #include "./include/defs.hpp"
 #endif
 
-int http_get(char* request,int client_fd,int argc, char **argv,string compression){
-  string URL = extract_url(request);
+int http_get(string request,int client_fd ,int argc, char **argv,string compression){
+  string URL = extractURL(request);
   regex echo("^/echo/");
   regex userAgent("^/user-agent");
   regex files("^/files/");
 
   if(regex_search(URL,echo)){
-    char echo_response[1024];
+    string echo_response;
     bool compress = false;
     if(compression.find("gzip") != string::npos) compress = true;
     ssize_t responseSize;
@@ -25,7 +25,7 @@ int http_get(char* request,int client_fd,int argc, char **argv,string compressio
       throw runtime_error("Failed to generate echo response");
     }; 
 
-    if(send(client_fd, echo_response,responseSize,0)<0){
+    if(send(client_fd, echo_response.data(),responseSize,0)<0){
       throw runtime_error("Failed to send GET response");
     }
   } 

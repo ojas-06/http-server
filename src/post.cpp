@@ -3,14 +3,14 @@
   #include "./include/defs.hpp"
 #endif
 
-int http_post(char *request, int client_fd,int argc, char** argv,string compression){
+int http_post(string request, int client_fd,int argc , char** argv,string compression){
   if(argc<3){
     throw runtime_error("Directory not provided for processing POST request");
     return 1;
   }
 
   string dir = argv[2];
-  string URL = extract_url(request);
+  string URL = extractURL(request);
   regex files_ep("/files/");
 
   string filename = URL.substr(7);

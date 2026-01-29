@@ -3,13 +3,7 @@
   #include "./include/defs.hpp"
 #endif
 
-size_t char_len(char *buf){
-  size_t len = 1;
-  while(buf[len-1] != '\0') len++;
-  return len;
-}
-
-string extract_url(char *buffer){
+string extractURL(string& buffer){
   string URL;
   int loc=0;
   while(buffer[loc]!='/') loc++;
@@ -21,23 +15,18 @@ string extract_url(char *buffer){
   return URL;
 }
 
-ssize_t echoResponse(string& URL,char* response,int compress){
-  size_t l;
+ssize_t echoResponse(string& URL,string& response,int compress){
   string uncomp = URL.substr(6);
   if(!compress){
-    strcpy(response,"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: ");
-    l = strlen(response);
+    response = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: ";
     for(char c: to_string(uncomp.size())+"\r\n\r\n"){
-      response[l] = c;
-      l++;
+      response += c;
     }
     for(char c:uncomp){
-      response[l] = c;
-      l++;
+      response += c;
     }
   } else if(compress == 1){
-    strcpy(response,"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Encoding: gzip\r\nContent-Length: ");
-    l = strlen(response);
+    response = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Encoding: gzip\r\nContent-Length: ";
     vector<Bytef> uncomp_bytef;
     str_to_bytef(uncomp, uncomp_bytef);
     vector<Bytef> compressed;
@@ -47,32 +36,17 @@ ssize_t echoResponse(string& URL,char* response,int compress){
       return -1;
     }
     for(char c: to_string(compressed.size())+"\r\n\r\n"){
-      response[l] = c;
-      l++;
+      response += c;
     }
     for(auto c:compressed){
-      response[l] = c;
-      l++;
+      response += c;
     }
   }
-  response[l] = '\0';
-  return l;
+  return ;
 }
 
-// void get_echo_str(string& URL,char* get_response){
-//   int i=6;
-//   size_t l = strlen(get_response);
-//   while(i<URL.size()){
-//     get_response[l] = URL[i];
-//     i++;
-//     l++;
-//   }
-//   get_response[l] = '\0';
-// }
-
-string extractHeader(char* request, string header){
+string extractHeader(string& req, string header){
   string content;
-  string req = request;
   int i = req.find(header);
   if(i==string::npos) {
     return "";
@@ -95,10 +69,7 @@ void nf_404(int client_fd){
   } 
 }
 
-string extract_request_body(char * request){
-  string body;
-  string req_str = request;
-
+string extract_request_body(string& req_str){
   int index = req_str.find("\r\n\r\n");
   if(index == string::npos){
     throw runtime_error("Failed to extract request body");
@@ -109,7 +80,7 @@ string extract_request_body(char * request){
   return req_str.substr(index);
 }
 
-void str_to_bytef(string in_buf,vector<Bytef> &out_buf) {
+void str_to_bytef(string& in_buf,vector<Bytef> &out_buf) {
   size_t n = in_buf.size();
   for(size_t i=0;i<n;i++){
     out_buf.push_back(in_buf[i]);
