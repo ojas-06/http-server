@@ -1,4 +1,4 @@
-DIR := .
+DIR := ./src
 INCLUDE := $(DIR)/INCLUDE
 OBJS := $(DIR)/objects
 
