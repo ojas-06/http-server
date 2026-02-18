@@ -8,7 +8,7 @@ LDLIBS := -lz
 
 all: server
 
-server: $(OBJS)/main.o $(OBJS)/helpers.o $(OBJS)/get.o $(OBJS)/post.o
+server: objects $(OBJS)/main.o $(OBJS)/helpers.o $(OBJS)/get.o $(OBJS)/post.o
 	$(CXX) $(OBJS)/*.o -o server $(LDLIBS)
 
 $(OBJS)/main.o: $(DIR)/main.cpp $(INCLUDE)/defs.hpp
@@ -22,6 +22,15 @@ $(OBJS)/get.o: $(DIR)/get.cpp $(INCLUDE)/defs.hpp
 
 $(OBJS)/post.o: $(DIR)/post.cpp $(INCLUDE)/defs.hpp
 	$(CXX) -c $(CXXFLAGS) $< -o $@
+
+$(INCLUDE)/defs.hpp:
+
+objects:
+	if [ -d "$(OBJS)" ]; then \
+		rm -f "$(OBJS)"/*; \
+	else \
+		mkdir -p "$(OBJS)"; \
+	fi
 
 clean:
 	rm -f $(OBJS)/*.o server

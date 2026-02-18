@@ -73,7 +73,7 @@ string extractHeader(string& req, string header){
 }
 
 void nf_404(int client_fd){
-  char response_404[] = "HTTP/1.1 404 Not Found\r\n\r\n";       
+  char response_404[] = "HTTP/1.1 404 Not Found\r\nContent-Length: 0\r\n\r\n";       
   if(send(client_fd, response_404,strlen(response_404),0)<0){   
     cerr<<"Failed to send 404 response\n";                 
   } 

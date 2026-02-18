@@ -49,3 +49,19 @@ in the response body
 <br><br>
 
 Also supports multiple concurrent and persistent connections.
+
+<br><br>
+
+<b>Performance / Load Testing</b>
+<br>
+Load-tested using <a href="https://github.com/wg/wrk">wrk</a> on a local VM (HTTP/1.1, <code>-t4 -c100 -d20s --latency</code>)
+<br><br>
+
+&nbsp;&nbsp;• <b>GET /</b> &nbsp;→&nbsp; ~<b>270K req/s</b>, ~<b>0.29 ms</b> median latency
+<br>
+&nbsp;&nbsp;• <b>GET /health</b> &nbsp;→&nbsp; ~<b>260–274K req/s</b>, ~<b>0.24–0.27 ms</b> median latency
+<br>
+&nbsp;&nbsp;• <b>GET /echo/abc</b> &nbsp;→&nbsp; ~<b>255–260K req/s</b>, ~<b>0.25–0.30 ms</b> median latency
+<br><br>
+
+&nbsp;&nbsp;<i>Note:</i> At peak load the server becomes CPU-bound; tail latency/timeouts may vary under VM scheduling.
