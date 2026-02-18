@@ -1,28 +1,51 @@
-[HTTP](https://en.wikipedia.org/wiki/Hypertext_Transfer_Protocol) is the
-protocol that powers the web. 
+[HTTP](https://en.wikipedia.org/wiki/Hypertext_Transfer_Protocol) is the protocol that powers the web.
 
-HTTP requests and endpoints supported in this project - 
-1. GET
-   Endpoints
-   a) Empty GET request       - 200 OK response
-   b) /echo/{string} endpoint - Responds with {string} in the response body
-                                Also supports gzip compression in the response when header "Accept-Encoding" is provided with one of the values being gzip
-                                Response header "Content-Encoding: gzip" shows the encoding.
-   c) /user-agent             - Client's [User-Agent](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/User-Agent) is returned in the response body
-   d) /files/{file-name}      - File contents are returned from the given {file-name} if file exists.
-                                Else a 404-Not Found Response is returned.
+<b>HTTP requests and endpoints supported in this project</b> -
+<br><br>
+
+<b>1) GET</b>
+<br>
+<b>&nbsp;&nbsp;Endpoints</b>
+<br>
+
+&nbsp;&nbsp;a) <b>GET /</b> (empty path) &nbsp;→&nbsp; <b>200 OK</b>
+<br>
+
+&nbsp;&nbsp;b) <b>GET /echo/{string}</b> &nbsp;→&nbsp; Responds with <code>{string}</code> in the response body
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Also supports <b>gzip</b> compression when request header <code>Accept-Encoding</code> contains <code>gzip</code>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Response includes header <code>Content-Encoding: gzip</code>
+<br>
+
+&nbsp;&nbsp;c) <b>GET /user-agent</b> &nbsp;→&nbsp; Returns the client’s
+<a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/User-Agent">User-Agent</a>
+in the response body
+<br>
+
+&nbsp;&nbsp;d) <b>GET /files/{file-name}</b> &nbsp;→&nbsp; Returns file contents if the file exists
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Else returns <b>404 Not Found</b>
+<br><br>
+
 <details>
-  <summary>Images</summary>
-
+  <summary><b>Images</b></summary>
+  <br>
   <img src="terminal1.png" width="800" />
+  <br><br>
   <img src="terminal2.png" width="800" />
-
 </details>
-   
-3. POST
-  Endpoint
-  /files/{file-name}          - Request body is read and stored in the {file-name} file. HTTP 201 OK response returned.
+
+<br><br>
+
+<b>2) POST</b>
+<br>
+<b>&nbsp;&nbsp;Endpoint</b>
+<br>
+
+&nbsp;&nbsp;<b>POST /files/{file-name}</b> &nbsp;→&nbsp; Stores the request body into <code>{file-name}</code>
+<br>
+&nbsp;&nbsp;Returns <b>201 Created</b>
+<br><br>
 
 Also supports multiple concurrent and persistent connections.
-
-
