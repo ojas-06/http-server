@@ -122,7 +122,7 @@ int http_get(string request, int client_fd, int argc, char **argv, string compre
       cerr << "Failed to send 200 response\n";
     }
   }
-  else if (URL.substr(0, 7) == "/health" && URL == "/")
+  else if (URL.substr(0, 7) == "/health" || URL == "/")
   {
     string response_200;
     if (!keep)
